@@ -386,12 +386,12 @@ local function create_search_window()
 		height = height,
 		style = "minimal",
 		border = "rounded",
-		title = " Search Todos ",
+		title = " Search to-dos ",
 		title_pos = "center",
 	})
 
 	-- Create search query pane
-	vim.ui.input({ prompt = "Search todos: " }, function(query)
+	vim.ui.input({ prompt = "Search to-dos: " }, function(query)
 		handle_search_query(query)
 	end)
 
