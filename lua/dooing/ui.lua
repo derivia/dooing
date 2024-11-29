@@ -372,7 +372,7 @@ local function create_search_window()
 	vim.api.nvim_buf_set_option(search_buf_id, "modifiable", false)
 	vim.api.nvim_buf_set_option(search_buf_id, "filetype", "todo_search")
 	local width = 40
-	local height = 10
+	local height = 20
 	local ui = vim.api.nvim_list_uis()[1]
 	local main_width = 40
 	local main_col = math.floor((ui.width - main_width) / 2)
