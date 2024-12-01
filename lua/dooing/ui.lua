@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global, param-type-mismatch
+---@diagnostic disable: undefined-global, param-type-mismatch, deprecated
 -- Explicitly declare vim as a global variable
 local vim = vim
 
@@ -108,8 +108,8 @@ edit_todo = function()
 	local todo_index = cursor[1] - 1
 	local line_content = vim.api.nvim_buf_get_lines(buf_id, todo_index, todo_index + 1, false)[1]
 
-	local done_icon = config.options.icons.done
-	local pending_icon = config.options.icons.pending
+	local done_icon = config.options.formatting.done.icon
+	local pending_icon = config.options.formatting.pending.icon
 
 	if line_content:match("^%s+[" .. done_icon .. pending_icon .. "]") then
 		if state.active_filter then
@@ -379,8 +379,8 @@ local function handle_search_query(query)
 		return
 	end
 
-	local done_icon = config.options.icons.done
-	local pending_icon = config.options.icons.pending
+	local done_icon = config.options.formatting.done.icon
+	local pending_icon = config.options.formatting.pending.icon
 
 	-- Prepare the search results
 	local results = state.search_todos(query)
@@ -604,35 +604,31 @@ end
 -- Public Interface
 --------------------------------------------------
 
-function M.render_todos()
-	if not buf_id then
-		return
+-- Helper function for formatting based on format config
+local function render_todo(todo, formatting, lang)
+	if not formatting or not formatting.pending or not formatting.done then
+		error("Invalid 'formatting' configuration in config.lua")
 	end
 
-	vim.api.nvim_buf_set_option(buf_id, "modifiable", true)
-	vim.api.nvim_buf_clear_namespace(buf_id, ns_id, 0, -1)
+	local components = {}
 
-	local lines = { "" }
-	state.sort_todos()
-	local priorities = config.options.priorities
+	-- Get config formatting
+	local format = todo.done and formatting.done.format or formatting.pending.format
+	if not format then
+		format = { "icon", "text" } -- Default format: icon and text
+	end
 
-	local lang = calendar and calendar.get_language()
-
-	local done_icon = config.options.icons.done
-	local pending_icon = config.options.icons.pending
-
-	for _, todo in ipairs(state.todos) do
-		if not state.active_filter or todo.text:match("#" .. state.active_filter) then
-			local check_icon = todo.done and done_icon or pending_icon
-
-			local text = todo.text
-
+	-- Breakdown config format and get dynamic text based on other configs
+	for _, part in ipairs(format) do
+		if part == "icon" then
+			table.insert(components, todo.done and formatting.done.icon or formatting.pending.icon)
+		elseif part == "text" then
+			table.insert(components, todo.text)
+		elseif part == "due_date" then
 			-- Format due date if exists
-			local due_date_str = ""
 			if todo.due_at then
 				local date = os.date("*t", todo.due_at)
 				local month = calendar.MONTH_NAMES[lang][date.month]
-
 				local formatted_date
 				if lang == "pt" or lang == "es" then
 					formatted_date = string.format("%d de %s de %d", date.day, month, date.year)
@@ -642,23 +638,55 @@ function M.render_todos()
 					formatted_date = string.format("%d %s %d", date.day, month, date.year)
 				elseif lang == "jp" then
 					formatted_date = string.format("%d年%s%d日", date.year, month, date.day)
-				else -- "en"
+				else
 					formatted_date = string.format("%s %d, %d", month, date.day, date.year)
 				end
-				due_date_str = " [" .. config.options.icons.calendar .. " " .. formatted_date .. "]"
-
-				-- Highlight overdue todos
+				local due_date_str
+				if config.options.calendar.icon ~= "" then
+					due_date_str = " [" .. config.options.calendar.icon .. " " .. formatted_date .. "]"
+				else
+					due_date_str = " [" .. formatted_date .. "]"
+				end
 				local current_time = os.time()
 				if not todo.done and todo.due_at < current_time then
 					due_date_str = due_date_str .. " [OVERDUE]"
 				end
+				table.insert(components, config.options.calendar.icon .. due_date_str)
 			end
+		elseif part == "priority" then
+			local score = state.get_priority_score(todo)
+			table.insert(components, string.format("Priority: %d", score))
+		end
+	end
 
-			if todo.done then
-				text = "~" .. text .. "~"
-			end
+	-- Join the components into a single string
+	return table.concat(components, " ")
+end
 
-			table.insert(lines, "  " .. check_icon .. " " .. text .. due_date_str)
+-- Main function for todos rendering
+function M.render_todos()
+	if not buf_id then
+		return
+	end
+
+	-- Create the buffer
+	vim.api.nvim_buf_set_option(buf_id, "modifiable", true)
+	vim.api.nvim_buf_clear_namespace(buf_id, ns_id, 0, -1)
+	local lines = { "" }
+
+	-- Sort todos and get config
+	state.sort_todos()
+	local lang = calendar and calendar.get_language()
+	local formatting = config.options.formatting
+	local done_icon = config.options.formatting.done.icon
+	local pending_icon = config.options.formatting.pending.icon
+
+	-- Loop through all todos and render them using the format
+	for _, todo in ipairs(state.todos) do
+		if not state.active_filter or todo.text:match("#" .. state.active_filter) then
+			-- use the appropriate format based on the todo's status and lang
+			local todo_text = render_todo(todo, formatting, lang)
+			table.insert(lines, "  " .. todo_text)
 		end
 	end
 
@@ -668,6 +696,7 @@ function M.render_todos()
 	end
 
 	table.insert(lines, "")
+
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, lines)
 
 	for i, line in ipairs(lines) do
@@ -834,10 +863,10 @@ function M.new_todo()
 
 					for i = 1, total_lines do
 						local line = vim.api.nvim_buf_get_lines(buf_id, i - 1, i, false)[1]
-						if line:match("^%s+[" .. config.options.icons.pending .. "]") then
+						if line:match("^%s+[" .. config.options.formatting.pending.icon .. "]") then
 							last_uncompleted_line = i
 						end
-						if line:match("^%s+[" .. config.options.icons.done .. "].*~") then
+						if line:match("^%s+[" .. config.options.formatting.done.icon .. "].*~") then
 							target_line = i - 1
 							break
 						end
@@ -865,8 +894,8 @@ function M.toggle_todo()
 	local cursor = vim.api.nvim_win_get_cursor(win_id)
 	local todo_index = cursor[1] - 1
 	local line_content = vim.api.nvim_buf_get_lines(buf_id, todo_index, todo_index + 1, false)[1]
-	local done_icon = config.options.icons.done
-	local pending_icon = config.options.icons.pending
+	local done_icon = config.options.formatting.done.icon
+	local pending_icon = config.options.formatting.pending.icon
 
 	if line_content:match("^%s+[" .. done_icon .. pending_icon .. "]") then
 		if state.active_filter then
@@ -892,8 +921,8 @@ function M.delete_todo()
 	local cursor = vim.api.nvim_win_get_cursor(win_id)
 	local todo_index = cursor[1] - 1
 	local line_content = vim.api.nvim_buf_get_lines(buf_id, todo_index, todo_index + 1, false)[1]
-	local done_icon = config.options.icons.done
-	local pending_icon = config.options.icons.pending
+	local done_icon = config.options.formatting.done.icon
+	local pending_icon = config.options.formatting.pending.icon
 
 	if line_content:match("^%s+[" .. done_icon .. pending_icon .. "]") then
 		if state.active_filter then

@@ -13,10 +13,16 @@ M.defaults = {
 			right = 2,
 		},
 	},
-	icons = {
-		pending = "○",
-		done = "✓",
-		calendar = "",
+	-- Users can change icon and ordering of components on both done and pending todos
+	formatting = {
+		pending = {
+			icon = "○",
+			format = { "icon", "text", "due_date" },
+		},
+		done = {
+			icon = "✓",
+			format = { "icon", "text", "due_date" },
+		},
 	},
 	prioritization = false,
 	priorities = {
@@ -73,6 +79,7 @@ M.defaults = {
 	},
 	calendar = {
 		language = "en",
+		icon = "",
 		keymaps = {
 			previous_day = "h",
 			next_day = "l",
