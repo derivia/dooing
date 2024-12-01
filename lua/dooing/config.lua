@@ -66,7 +66,8 @@ M.defaults = {
 		edit_tag = "e",
 		delete_tag = "d",
 		search_todos = "/",
-		toggle_priority = "<Space>"
+		remove_duplicates = "<leader>D",
+		toggle_priority = "<Space>",
 	},
 	calendar = {
 		language = "en",

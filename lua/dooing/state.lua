@@ -59,7 +59,6 @@ function M.toggle_todo(index)
 end
 
 -- Parse date string in the format MM/DD/YYYY
--- @TODO: handle `format` -> a custom date format
 local function parse_date(date_str, format)
 	local month, day, year = date_str:match("^(%d%d?)/(%d%d?)/(%d%d%d%d)$")
 
@@ -161,6 +160,35 @@ function M.delete_completed()
 	end
 	M.todos = remaining_todos
 	save_todos()
+end
+
+-- Helper function for hashing a todo object
+local function gen_hash(todo)
+	local todo_string = vim.inspect(todo)
+	return vim.fn.sha256(todo_string)
+end
+
+-- Remove duplicate todos based on hash
+function M.remove_duplicates()
+	local seen = {}
+	local uniques = {}
+	local removed = 0
+
+	for _, todo in ipairs(M.todos) do
+		if type(todo) == "table" then
+			local hash = gen_hash(todo)
+			if not seen[hash] then
+				seen[hash] = true
+				table.insert(uniques, todo)
+			else
+				removed = removed + 1
+			end
+		end
+	end
+
+	M.todos = uniques
+	save_todos()
+	return tostring(removed)
 end
 
 -- Calculate priority score for a todo item
