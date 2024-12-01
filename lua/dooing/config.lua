@@ -69,6 +69,7 @@ M.defaults = {
 		toggle_priority = "<Space>",
 		import_todos = "I",
 		export_todos = "E",
+		remove_duplicates = "<leader>D",
 	},
 	calendar = {
 		language = "en",

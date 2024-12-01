@@ -593,6 +593,7 @@ local function create_window()
 	set_conditional_keymap("remove_due_date", remove_due_date, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("import_todos", prompt_import, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("export_todos", prompt_export, { buffer = buf_id, nowait = true })
+	set_conditional_keymap("remove_duplicates", M.remove_duplicates, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("search_todos", create_search_window, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("clear_filter", function()
 		state.set_filter(nil)
@@ -916,6 +917,13 @@ end
 -- Deletes all completed todos
 function M.delete_completed()
 	state.delete_completed()
+	M.render_todos()
+end
+
+-- Delete all duplicated todos
+function M.remove_duplicates()
+	local dups = state.remove_duplicates()
+	vim.notify("Removed " .. dups .. " duplicates.", vim.log.levels.INFO)
 	M.render_todos()
 end
 
