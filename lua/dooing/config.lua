@@ -13,7 +13,6 @@ M.defaults = {
 			right = 2,
 		},
 	},
-	-- Users can change icon and ordering of components on both done and pending todos
 	formatting = {
 		pending = {
 			icon = "○",
@@ -63,7 +62,7 @@ M.defaults = {
 		delete_todo = "d",
 		delete_completed = "D",
 		close_window = "q",
-		add_due_date = "h",
+		add_due_date = "H",
 		remove_due_date = "r",
 		toggle_help = "?",
 		toggle_tags = "t",
