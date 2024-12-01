@@ -224,6 +224,60 @@ create_help_window = function()
 	vim.keymap.set("n", config.options.keymaps.toggle_help, close_help, { buffer = help_buf_id, nowait = true })
 end
 
+local function prompt_export()
+	local default_path = vim.fn.expand("~/todos.json")
+
+	vim.ui.input({
+		prompt = "Export todos to file: ",
+		default = default_path,
+		completion = "file",
+	}, function(file_path)
+		if not file_path or file_path == "" then
+			vim.notify("Export cancelled", vim.log.levels.INFO)
+			return
+		end
+
+		-- expand ~ to full home directory path
+		file_path = vim.fn.expand(file_path)
+
+		local success, message = state.export_todos(file_path)
+		if success then
+			vim.notify(message, vim.log.levels.INFO)
+		else
+			vim.notify(message, vim.log.levels.ERROR)
+		end
+	end)
+end
+
+local function prompt_import(callback)
+	local default_path = vim.fn.expand("~/todos.json")
+
+	vim.ui.input({
+		prompt = "Import todos from file: ",
+		default = default_path,
+		completion = "file",
+	}, function(file_path)
+		if not file_path or file_path == "" then
+			vim.notify("Import cancelled", vim.log.levels.INFO)
+			return
+		end
+
+		-- expand ~ to full home directory path
+		file_path = vim.fn.expand(file_path)
+
+		local success, message = state.import_todos(file_path)
+		if success then
+			vim.notify(message, vim.log.levels.INFO)
+			if callback then
+				callback()
+			end
+			M.render_todos()
+		else
+			vim.notify(message, vim.log.levels.ERROR)
+		end
+	end)
+end
+
 -- Creates and manages the tags window
 create_tag_window = function()
 	if tag_win_id and vim.api.nvim_win_is_valid(tag_win_id) then
@@ -537,6 +591,8 @@ local function create_window()
 	set_conditional_keymap("edit_todo", edit_todo, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("add_due_date", add_due_date, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("remove_due_date", remove_due_date, { buffer = buf_id, nowait = true })
+	set_conditional_keymap("import_todos", prompt_import, { buffer = buf_id, nowait = true })
+	set_conditional_keymap("export_todos", prompt_export, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("search_todos", create_search_window, { buffer = buf_id, nowait = true })
 	set_conditional_keymap("clear_filter", function()
 		state.set_filter(nil)
@@ -577,7 +633,7 @@ function M.render_todos()
 				local month = calendar.MONTH_NAMES[lang][date.month]
 
 				local formatted_date
-				if lang == "pt" or lang == "en" then
+				if lang == "pt" or lang == "es" then
 					formatted_date = string.format("%d de %s de %d", date.day, month, date.year)
 				elseif lang == "fr" then
 					formatted_date = string.format("%d %s %d", date.day, month, date.year)
