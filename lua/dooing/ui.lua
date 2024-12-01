@@ -486,8 +486,8 @@ end
 -- Creates and configures the main todo window
 local function create_window()
 	local ui = vim.api.nvim_list_uis()[1]
-	local width = 55
-	local height = 20
+	local width = config.options.window.width
+	local height = config.options.window.height
 	local col = math.floor((ui.width - width) / 2)
 	local row = math.floor((ui.height - height) / 2)
 
@@ -554,7 +554,6 @@ function M.render_todos()
 	local priorities = config.options.priorities
 
 	local lang = calendar and calendar.get_language()
-	lang = calendar.MONTH_NAMES[lang] and lang or "en"
 
 	for _, todo in ipairs(state.todos) do
 		if not state.active_filter or todo.text:match("#" .. state.active_filter) then
@@ -569,12 +568,18 @@ function M.render_todos()
 				local month = calendar.MONTH_NAMES[lang][date.month]
 
 				local formatted_date
-				if lang == "pt" then
+				if lang == "pt" or lang == "en" then
 					formatted_date = string.format("%d de %s de %d", date.day, month, date.year)
-				else
+				elseif lang == "fr" then
+					formatted_date = string.format("%d %s %d", date.day, month, date.year)
+				elseif lang == "de" or lang == "it" then
+					formatted_date = string.format("%d %s %d", date.day, month, date.year)
+				elseif lang == "jp" then
+					formatted_date = string.format("%d年%s%d日", date.year, month, date.day)
+				else -- "en"
 					formatted_date = string.format("%s %d, %d", month, date.day, date.year)
 				end
-				due_date_str = " [@ " .. formatted_date .. "]"
+				due_date_str = " [" .. formatted_date .. "]"
 
 				-- Highlight overdue todos
 				local current_time = os.time()
