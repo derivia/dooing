@@ -646,15 +646,15 @@ local function render_todo(todo, formatting, lang)
 				end
 				local due_date_str
 				if config.options.calendar.icon ~= "" then
-					due_date_str = " [" .. config.options.calendar.icon .. " " .. formatted_date .. "]"
+					due_date_str = "[" .. config.options.calendar.icon .. " " .. formatted_date .. "]"
 				else
-					due_date_str = " [" .. formatted_date .. "]"
+					due_date_str = "[" .. formatted_date .. "]"
 				end
 				local current_time = os.time()
 				if not todo.done and todo.due_at < current_time then
 					due_date_str = due_date_str .. " [OVERDUE]"
 				end
-				table.insert(components, config.options.calendar.icon .. due_date_str)
+				table.insert(components, due_date_str)
 			end
 		elseif part == "priority" then
 			local score = state.get_priority_score(todo)
