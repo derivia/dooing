@@ -14,14 +14,17 @@ M.defaults = {
 		},
 	},
 	quick_keys = true,
+	notes = {
+		icon = "📓",
+	},
 	formatting = {
 		pending = {
 			icon = "○",
-			format = { "icon", "text", "due_date", "ect" },
+			format = { "icon", "notes_icon", "text", "due_date", "ect" },
 		},
 		done = {
 			icon = "✓",
-			format = { "icon", "text", "due_date", "ect" },
+			format = { "icon", "notes_icon", "text", "due_date", "ect" },
 		},
 	},
 	priorities = {

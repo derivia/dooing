@@ -903,7 +903,7 @@ end
 --------------------------------------------------
 
 -- Helper function for formatting based on format config
-local function render_todo(todo, formatting, lang)
+local function render_todo(todo, formatting, lang, notes_icon)
 	if not formatting or not formatting.pending or not formatting.done then
 		error("Invalid 'formatting' configuration in config.lua")
 	end
@@ -913,7 +913,7 @@ local function render_todo(todo, formatting, lang)
 	-- Get config formatting
 	local format = todo.done and formatting.done.format or formatting.pending.format
 	if not format then
-		format = { "icon", "text", "ect" } -- Default format: icon, text, and estimated completion time
+		format = { "notes_icon", "icon", "text", "ect" } -- Default format: notes icon, icon, text, and estimated completion time
 	end
 
 	-- Breakdown config format and get dynamic text based on other configs
@@ -922,6 +922,8 @@ local function render_todo(todo, formatting, lang)
 			table.insert(components, todo.done and formatting.done.icon or formatting.pending.icon)
 		elseif part == "text" then
 			table.insert(components, todo.text)
+		elseif part == "notes_icon" then
+			table.insert(components, notes_icon)
 		elseif part == "due_date" then
 			-- Format due date if exists
 			if todo.due_at then
@@ -994,12 +996,19 @@ function M.render_todos()
 	local formatting = config.options.formatting
 	local done_icon = config.options.formatting.done.icon
 	local pending_icon = config.options.formatting.pending.icon
+	local notes_icon = config.options.notes.icon
+	local tmp_notes_icon = ""
 
 	-- Loop through all todos and render them using the format
 	for _, todo in ipairs(state.todos) do
 		if not state.active_filter or todo.text:match("#" .. state.active_filter) then
 			-- use the appropriate format based on the todo's status and lang
-			local todo_text = render_todo(todo, formatting, lang)
+			if todo.notes == nil or todo.notes == "" then
+				tmp_notes_icon = ""
+			else
+				tmp_notes_icon = notes_icon
+			end
+			local todo_text = render_todo(todo, formatting, lang, tmp_notes_icon)
 			table.insert(lines, "  " .. todo_text)
 		end
 	end
