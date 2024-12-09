@@ -647,21 +647,6 @@ local function remove_due_date()
 	end
 end
 
-local function dump(o)
-	if type(o) == "table" then
-		local s = "{ "
-		for k, v in pairs(o) do
-			if type(k) ~= "number" then
-				k = '"' .. k .. '"'
-			end
-			s = s .. "[" .. k .. "] = " .. dump(v) .. ","
-		end
-		return s .. "} "
-	else
-		return tostring(o)
-	end
-end
-
 local function open_todo_scratchpad()
 	local cursor = vim.api.nvim_win_get_cursor(win_id)
 	local todo_index = cursor[1] - 1
