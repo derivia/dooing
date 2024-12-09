@@ -76,6 +76,7 @@ M.defaults = {
 		import_todos = "I",
 		export_todos = "E",
 		remove_duplicates = "<leader>D",
+		open_todo_scratchpad = "<leader>p",
 	},
 	calendar = {
 		language = "en",
